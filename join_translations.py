@@ -43,7 +43,6 @@ def process_song(path):
 
     return outputname
   else:
-    print "omitting " + path[0]
     return None
 
 
