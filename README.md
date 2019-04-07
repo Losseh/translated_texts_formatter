@@ -1,0 +1,1 @@
+# translated_texts_formatter
