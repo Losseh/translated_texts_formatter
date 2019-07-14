@@ -2,6 +2,10 @@
 
 import sys
 import os
+import os.path
+
+name_key = "$name"
+file_key = "$content"
 
 
 def readfile(filename):
@@ -9,6 +13,12 @@ def readfile(filename):
   content = f.readlines()
   f.close()
   return content
+
+
+def read_translations(path, txt_files, orig_name):
+    translations = {name: readfile(os.path.join(path[0], name)) for name in filter(lambda f: f != orig_name, txt_files)}
+    result = map(lambda name: {name_key: name, file_key: translations[name]}, sorted(translations.keys()))
+    return result
 
 
 def format_normal(line):
@@ -20,21 +30,38 @@ def format_translation(line):
 
 
 def process_song(path):
-  if path[2] == ["orig.txt", "eng.txt"]:
-    file1 = readfile(path[0] + "/orig.txt")
-    file2 = readfile(path[0] + "/eng.txt")
+  only_txts = filter(lambda x: "txt" in x, path[2])
+  orig_name = "orig.txt"
+  if orig_name in only_txts:
+    # reading source file
+    orig_path = os.path.join(path[0], orig_name)
+    orig = readfile(orig_path)
 
-    assert len(file1) == len(file2), "Both files must have the same length " + path
+    # transforming translation files
+    translations = read_translations(path, only_txts, orig_name)
+
+    # assert that every translation file has the same length as the source lyrics
+    for translation in translations:
+      len_f, len_orig = len(translation[file_key]), len(orig)
+      assert len_orig == len_f, "Both files must have the same length in " + path + ": orig.len=" + len_orig + " != " + translation[name_key] + ".len=" + len_f
   
+
+    # generating the content
     content = ["<html>\n"]
- 
-    for i in range(len(file1)):
-      content.append(format_normal(file1[i]) + "<br>\n")
-      content.append(format_translation(file2[i]) + "<br>\n")
-      content.append("<br>\n")
+    for i in range(len(orig)):
+      formatted_orig = format_normal(orig[i])
+      if formatted_orig == "":
+        content.append("<br>\n")
+      else:
+        content.append(formatted_orig + "<br>\n")
+        for translation in translations:
+          content.append(format_translation(translation[file_key][i]) + "<br>\n")
+
+        content.append("<br>\n")
 
     content.append("</html>")
 
+    # writing the content to output file
     outputname = path[0] + ".html"
     print "writing to " + outputname
     output = open(outputname, "w+")
@@ -42,6 +69,7 @@ def process_song(path):
     output.close()
 
     return outputname
+
   else:
     return None
 
