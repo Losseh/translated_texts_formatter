@@ -43,7 +43,9 @@ def process_song(path):
     # assert that every translation file has the same length as the source lyrics
     for translation in translations:
       len_f, len_orig = len(translation[file_key]), len(orig)
-      assert len_orig == len_f, "Both files must have the same length in " + path + ": orig.len=" + len_orig + " != " + translation[name_key] + ".len=" + len_f
+      file_name = str(translation[name_key])
+      message = "Both files must have the same length in " + path[0] + ": orig.len=" + str(len_orig) + " != " + file_name + ".len=" + str(len_f)
+      assert len_orig == len_f, message
   
 
     # generating the content
